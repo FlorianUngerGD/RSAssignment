@@ -49,7 +49,7 @@ public class Main {
 		Key privateKey = readKeyFromFile("sk.txt");
 		List<BigInteger> encryptedInts = getBigIntegersFromFile("cipher.txt");
 		List<Integer> decriptedInts = new ArrayList<>();
-		for (BigInteger code: encryptedInts) {
+		for (BigInteger code : encryptedInts) {
 			decriptedInts.add(decriptInteger(privateKey, code));
 		}
 
@@ -66,7 +66,7 @@ public class Main {
 		List<Integer> asciiCodes = getAscii(loadFileContents("text.txt"));
 
 		List<BigInteger> encryptedInts = new ArrayList();
-		for (Integer code: asciiCodes) {
+		for (Integer code : asciiCodes) {
 			encryptedInts.add(encriptInteger(publicKey, code));
 		}
 
@@ -93,12 +93,38 @@ public class Main {
 
 	public static BigInteger encriptInteger(Key publicKey, Integer intToEncrypt) {
 		// Provided Integer gets encrypted
-		return BigInteger.valueOf(intToEncrypt).modPow(publicKey.getSecondInt(), publicKey.getFirstInt());
+		return fastExponentiation(BigInteger.valueOf(intToEncrypt), publicKey.getSecondInt(), publicKey.getFirstInt());
 	}
 
 	public static Integer decriptInteger(Key privateKey, BigInteger intToDecrypt) {
 		// Provided Integer gets decrypted
 		return intToDecrypt.modPow(privateKey.getSecondInt(), privateKey.getFirstInt()).intValue();
+	}
+
+	public static BigInteger fastExponentiation(BigInteger base, BigInteger exponent, BigInteger mod) {
+		List<BigInteger> bitset = new ArrayList<>();
+
+		//creates bitrepresentation of exponent in reverse order
+		while(!(exponent.equals(BigInteger.valueOf(0)))){
+			if (exponent.remainder(BigInteger.valueOf(2)).equals(BigInteger.valueOf(1))){
+				bitset.add(BigInteger.valueOf(1));
+			}
+			else {
+				bitset.add(BigInteger.valueOf(0));
+			}
+			exponent = exponent.divide(BigInteger.valueOf(2));
+		}
+
+		BigInteger h = BigInteger.valueOf(1);
+		BigInteger k = base;
+
+		for (int i = 0; i < bitset.size(); i++) {
+			if (bitset.get(i).equals(BigInteger.valueOf(1))) {
+				h = (h.multiply(k)).mod(mod);
+			}
+			k = k.multiply(k).mod(mod);
+		}
+		return h.mod(mod);
 	}
 
 	public static Key readKeyFromFile(String fileName) {
@@ -147,8 +173,7 @@ public class Main {
 		try {
 			Scanner scanner = new Scanner(new File(filename));
 			scanner.useDelimiter(",");
-			while (scanner.hasNext())
-			{
+			while (scanner.hasNext()) {
 				newBigInts.add(scanner.nextBigInteger());
 			}
 			scanner.close();
